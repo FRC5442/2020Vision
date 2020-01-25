@@ -29,7 +29,7 @@ diagonalView = math.radians(68.5)
 horizontalAspect = 16
 verticalAspect = 9
 
-diagonal Aspect = math.hypot(horizontalAspect, verticalAspect)
+diagonalAspect = math.hypot(horizontalAspect, verticalAspect)
 
 ################### FRC VISION IMAGE CODE (WEB INTERFACE) #######################
 configFile = "/boot/frc.json"
