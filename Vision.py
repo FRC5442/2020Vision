@@ -4,9 +4,6 @@
 # Open Source Software - may be modified and shared by FRC teams. The code
 # must be accompanied by the FIRST BSD license file in the root directory of
 # the project.
-#
-# Screaming Chickens (Team 3997) 2019 license: use it as much as you want. Crediting is recommended because it lets me know that I am being useful.
-# Credit to Screaming Chickens 3997
 #----------------------------------------------------------------------------
 
 import json
@@ -29,15 +26,18 @@ image_height = 144
 upperGreen = np.array([104, 214, 255])
 lowerGreen = np.array([0, 48, 64])
 
-dev = 0
-cap = cv2.VideoCapture(dev)
-
 diagonalView = math.radians(68.5)
 
 horizontalAspect = 16
 verticalAspect = 9
 
 diagonalAspect = math.hypot(horizontalAspect, verticalAspect)
+
+horizontalView = math.atan(math.tan(diagonalView/2) * (horizontalAspect / diagonalAspect)) * 2
+verticalView = math.atan(math.tan(diagonalView/2) * (verticalAspect / diagonalAspect)) * 2
+
+H_FOCAL_LENGTH = image_width / (2*math.tan((horizontalView/2)))
+V_FOCAL_LENGTH = image_height / (2*math.tan((verticalView/2)))
 
 def flipImage(frame):
     return cv2.flip(frame, -1)
@@ -50,11 +50,22 @@ def threshold_video(lower_color, upper_color, frame):
     return mask
 
 def findTargets(frame, mask):
-    contours = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_KCOS)
-'''    
-# TODO Finish Detect Tape
-def detectTape(contours):
-'''
+    _, contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_KCOS)
+    screenHeight, screenWidth, _ = frame.shape
+
+    centerX = (screenWidth / 2) - .5
+    centerY = (screenHeight / 2) - .5
+
+    image = frame.copy
+
+    if len(contours) != 0:
+       # image = findTape(contours, image, centerX, centerY)
+    else:
+        networkTable.putBoolean("tapeDetected", False)
+
+    return image
+
+# TODO Make Detect Tape Function    
 
 ################### FRC VISION IMAGE CODE (WEB INTERFACE) #######################
 configFile = "/boot/frc.json"
@@ -235,3 +246,5 @@ if __name__ == "__main__":
     for config in switchedCameraConfigs:
         startSwitchedCamera(config)
 ############################### END OF FRC VISION IMAGE CODE #######################
+
+cap = cv2.
