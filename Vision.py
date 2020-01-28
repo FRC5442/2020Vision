@@ -4,13 +4,15 @@
 # Open Source Software - may be modified and shared by FRC teams. The code
 # must be accompanied by the FIRST BSD license file in the root directory of
 # the project.
+#
+# Screaming Chickens (Team 3997) 2019 license: use it as much as you want. Crediting is recommended because it lets me know that I am being useful.
+# Credit to Screaming Chickens 3997
 #----------------------------------------------------------------------------
 
 import json
 import time
 import sys
 from threading import Thread
-
 
 from cscore import CameraServer, MjpegServer, VideoSource, UsbCamera
 from networktables import NetworkTablesInstance
@@ -24,12 +26,35 @@ import math
 image_width = 256
 image_height = 144
 
+upperGreen = np.array([104, 214, 255])
+lowerGreen = np.array([0, 48, 64])
+
+dev = 0
+cap = cv2.VideoCapture(dev)
+
 diagonalView = math.radians(68.5)
 
 horizontalAspect = 16
 verticalAspect = 9
 
 diagonalAspect = math.hypot(horizontalAspect, verticalAspect)
+
+def flipImage(frame):
+    return cv2.flip(frame, -1)
+
+def threshold_video(lower_color, upper_color, frame):
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    mask = cv2.inRange(hsv, lower_color, upper_color)
+
+    return mask
+
+def findTargets(frame, mask):
+    contours = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_KCOS)
+'''    
+# TODO Finish Detect Tape
+def detectTape(contours):
+'''
 
 ################### FRC VISION IMAGE CODE (WEB INTERFACE) #######################
 configFile = "/boot/frc.json"
@@ -209,6 +234,4 @@ if __name__ == "__main__":
     # start switched cameras
     for config in switchedCameraConfigs:
         startSwitchedCamera(config)
-
-    while True:
-        time.sleep(10)
+############################### END OF FRC VISION IMAGE CODE #######################
