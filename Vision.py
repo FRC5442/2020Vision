@@ -247,4 +247,17 @@ if __name__ == "__main__":
         startSwitchedCamera(config)
 ############################### END OF FRC VISION IMAGE CODE #######################
 
-cap = cv2.
+cap = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = cap.read()
+    
+    if ret == True:
+        img = flipImage(frame)
+        hsv = threshold_video(lowerGreen, upperGreen, img)
+        contours = findTargets(img, hsv)
+    else:
+        break
+
+cv2.destroyAllWindows()
+cap.release()
