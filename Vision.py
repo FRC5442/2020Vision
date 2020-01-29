@@ -59,7 +59,8 @@ def findTargets(frame, mask):
     image = frame.copy
 
     if len(contours) != 0:
-       # image = findTape(contours, image, centerX, centerY)
+        # image = findTape(contours, image, centerX, centerY)
+        networkTable.putBoolean("tapeDetected", True)
     else:
         networkTable.putBoolean("tapeDetected", False)
 
