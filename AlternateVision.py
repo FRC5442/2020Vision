@@ -146,8 +146,6 @@ class WebcamVideoStream:
         return self.stream.getError()
 ###################### PROCESSING OPENCV ################################
 
-#Angles in radians
-
 #image size ratioed to 16:9
 image_width = 256
 image_height = 144
@@ -171,14 +169,10 @@ H_FOCAL_LENGTH = image_width / (2*math.tan((horizontalView/2)))
 V_FOCAL_LENGTH = image_height / (2*math.tan((verticalView/2)))
 #blurs have to be odd
 green_blur = 7
-orange_blur = 27
 
 # define range of green of retroreflective tape in HSV
 lower_green = np.array([0,220,25])
 upper_green = np.array([101, 255, 255])
-#define range of orange from cargo ball in HSV
-lower_orange = np.array([0,193,92])
-upper_orange = np.array([23, 255, 255])
 
 #Flip image if camera mounted upside down
 def flipImage(frame):
@@ -193,7 +187,6 @@ def blurImg(frame, blur_radius):
 # Masks the video based on a range of hsv colors
 # Takes in a frame, range of color, and a blurred frame, returns a masked frame
 def threshold_video(lower_color, upper_color, blur):
-
 
     # Convert BGR to HSV
     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
@@ -228,132 +221,6 @@ def findTargets(frame, mask):
 
     # Shows the contours overlayed on the original video
     return image
-
-# Finds the balls from the masked image and displays them on original stream + network tables
-def findCargo(frame, mask):
-    # Finds contours
-    _, contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_KCOS)
-    # Take each frame
-    # Gets the shape of video
-    screenHeight, screenWidth, _ = frame.shape
-    # Gets center of height and width
-    centerX = (screenWidth / 2) - .5
-    centerY = (screenHeight / 2) - .5
-    # Copies frame and stores it in image
-    image = frame.copy()
-    # Processes the contours, takes in (contours, output_image, (centerOfImage)
-    if len(contours) != 0:
-        image = findBall(contours, image, centerX, centerY)
-    else:
-        # pushes that it doesn't see cargo to network tables
-        networkTable.putBoolean("cargoDetected", False)
-    # Shows the contours overlayed on the original video
-    return image
-
-
-# Draws Contours and finds center and yaw of orange ball
-# centerX is center x coordinate of image
-# centerY is center y coordinate of image
-def findBall(contours, image, centerX, centerY):
-    screenHeight, screenWidth, channels = image.shape;
-    #Seen vision targets (correct angle, adjacent to each other)
-    cargo = []
-
-    if len(contours) > 0:
-        #Sort contours by area size (biggest to smallest)
-        cntsSorted = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
-
-        biggestCargo = []
-        for cnt in cntsSorted:
-            x, y, w, h = cv2.boundingRect(cnt)
-            aspect_ratio = float(w) / h
-            # Get moments of contour; mainly for centroid
-            M = cv2.moments(cnt)
-            # Get convex hull (bounding polygon on contour)
-            hull = cv2.convexHull(cnt)
-            # Calculate Contour area
-            cntArea = cv2.contourArea(cnt)
-            # Filters contours based off of size
-            if (checkBall(cntArea, aspect_ratio)):
-                ### MOSTLY DRAWING CODE, BUT CALCULATES IMPORTANT INFO ###
-                # Gets the centeroids of contour
-                if M["m00"] != 0:
-                    cx = int(M["m10"] / M["m00"])
-                    cy = int(M["m01"] / M["m00"])
-                else:
-                    cx, cy = 0, 0
-                if(len(biggestCargo) < 3):
-
-
-                    ##### DRAWS CONTOUR######
-                    # Gets rotated bounding rectangle of contour
-                    rect = cv2.minAreaRect(cnt)
-                    # Creates box around that rectangle
-                    box = cv2.boxPoints(rect)
-                    # Not exactly sure
-                    box = np.int0(box)
-                    # Draws rotated rectangle
-                    cv2.drawContours(image, [box], 0, (23, 184, 80), 3)
-
-                    # Draws a vertical white line passing through center of contour
-                    cv2.line(image, (cx, screenHeight), (cx, 0), (255, 255, 255))
-                    # Draws a white circle at center of contour
-                    cv2.circle(image, (cx, cy), 6, (255, 255, 255))
-
-                    # Draws the contours
-                    cv2.drawContours(image, [cnt], 0, (23, 184, 80), 1)
-
-                    # Gets the (x, y) and radius of the enclosing circle of contour
-                    (x, y), radius = cv2.minEnclosingCircle(cnt)
-                    # Rounds center of enclosing circle
-                    center = (int(x), int(y))
-                    # Rounds radius of enclosning circle
-                    radius = int(radius)
-                    # Makes bounding rectangle of contour
-                    rx, ry, rw, rh = cv2.boundingRect(cnt)
-
-                    # Draws countour of bounding rectangle and enclosing circle in green
-                    cv2.rectangle(image, (rx, ry), (rx + rw, ry + rh), (23, 184, 80), 1)
-
-                    cv2.circle(image, center, radius, (23, 184, 80), 1)
-
-                    # Appends important info to array
-                    if not biggestCargo:
-                        biggestCargo.append([cx, cy])
-                    elif [cx, cy, cnt] not in biggestCargo:
-                        biggestCargo.append([cx, cy])
-
-
-
-
-        # Check if there are cargo seen
-        if (len(biggestCargo) > 0):
-            #pushes that it sees cargo to network tables
-            networkTable.putBoolean("cargoDetected", True)
-
-            # Sorts targets based on x coords to break any angle tie
-            biggestCargo.sort(key=lambda x: math.fabs(x[0]))
-            closestCargo = min(biggestCargo, key=lambda x: (math.fabs(x[0] - centerX)))
-            xCoord = closestCargo[0]
-            finalTarget = calculateYaw(xCoord, centerX, H_FOCAL_LENGTH)
-            print("Yaw: " + str(finalTarget))
-            # Puts the yaw on screen
-            # Draws yaw of target + line where center of target is
-            cv2.putText(image, "Yaw: " + str(finalTarget), (40, 40), cv2.FONT_HERSHEY_COMPLEX, .6,
-                        (255, 255, 255))
-            cv2.line(image, (int(xCoord), screenHeight), (int(xCoord), 0), (255, 0, 0), 2)
-
-            currentAngleError = finalTarget
-            #pushes cargo angle to network tables
-            networkTable.putNumber("cargoYaw", currentAngleError)
-
-        else:
-            #pushes that it doesn't see cargo to network tables
-            networkTable.putBoolean("cargoDetected", False)
-
-        cv2.line(image, (int(centerX), screenHeight), (int(centerX), 0), (255, 255, 255), 2)
-
-        return image
 
 # Draws Contours and finds center and yaw of vision targets
 # centerX is center x coordinate of image
@@ -520,10 +387,6 @@ def findTape(contours, image, centerX, centerY):
 # Checks if tape contours are worthy based off of contour area and (not currently) hull area
 def checkContours(cntSize, hullSize):
     return cntSize > (image_width / 6)
-
-# Checks if ball contours are worthy based off of contour area and (not currently) hull area
-def checkBall(cntSize, cntAspectRatio):
-    return (cntSize > (image_width / 2)) and (round(cntAspectRatio) == 1)
 
 #Forgot how exactly it works, but it works!
 def translateRotation(rotation, width, height):
@@ -761,24 +624,18 @@ if __name__ == "__main__":
             streamViewer.notifyError(cap.getError());
             # skip the rest of the current iteration
             continue
+        
         #Checks if you just want camera for driver (No processing), False by default
         if(networkTable.getBoolean("Driver", False)):
             cap.autoExpose = True
             processed = frame
         else:
-            # Checks if you just want camera for Tape processing , False by default
-            if(networkTable.getBoolean("Tape", True)):
-                #Lowers exposure to 0
-                cap.autoExpose = False
-                boxBlur = blurImg(frame, green_blur)
-                threshold = threshold_video(lower_green, upper_green, boxBlur)
-                processed = findTargets(frame, threshold)
-            else:
-                # Checks if you just want camera for Cargo processing, by dent of everything else being false, true by default
-                cap.autoExpose = True
-                boxBlur = blurImg(frame, orange_blur)
-                threshold = threshold_video(lower_orange, upper_orange, boxBlur)
-                processed = findCargo(frame, threshold)
+            #Lowers exposure to 0
+            cap.autoExpose = False
+            boxBlur = blurImg(frame, green_blur)
+            threshold = threshold_video(lower_green, upper_green, boxBlur)
+            processed = findTargets(frame, threshold)
+
         #Puts timestamp of camera on netowrk tables
         networkTable.putNumber("VideoTimestamp", timestamp)
         streamViewer.frame = processed
