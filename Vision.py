@@ -4,6 +4,9 @@
 # Open Source Software - may be modified and shared by FRC teams. The code
 # must be accompanied by the FIRST BSD license file in the root directory of
 # the project.
+#
+# Screaming Chickens 2019 license: use it as much as you want. Crediting is recommended because it lets me know that I am being useful.
+# Credit to Screaming Chickens 3997
 #----------------------------------------------------------------------------
 
 import json
@@ -18,13 +21,135 @@ import cv2
 import numpy as np
 import math
 
+################################ SCREAMING CHICKENS CODE ############################
+
+class FPS:
+	def __init__(self):
+		# store the start time, end time, and total number of frames
+		# that were examined between the start and end intervals
+		self._start = None
+		self._end = None
+		self._numFrames = 0
+
+	def start(self):
+		# start the timer
+		self._start = datetime.datetime.now()
+		return self
+
+	def stop(self):
+		# stop the timer
+		self._end = datetime.datetime.now()
+
+	def update(self):
+		# increment the total number of frames examined during the
+		# start and end intervals
+		self._numFrames += 1
+
+	def elapsed(self):
+		# return the total number of seconds between the start and
+		# end interval
+		return (self._end - self._start).total_seconds()
+
+	def fps(self):
+		# compute the (approximate) frames per second
+		return self._numFrames / self.elapsed()
+
+
+# class that runs separate thread for showing video,
+class VideoShow:
+    """
+    Class that continuously shows a frame using a dedicated thread.
+    """
+
+    def __init__(self, imgWidth, imgHeight, cameraServer, frame=None, name='stream'):
+        self.outputStream = cameraServer.putVideo(name, imgWidth, imgHeight)
+        self.frame = frame
+        self.stopped = False
+
+    def start(self):
+        Thread(target=self.show, args=()).start()
+        return self
+
+    def show(self):
+        while not self.stopped:
+            self.outputStream.putFrame(self.frame)
+
+    def stop(self):
+        self.stopped = True
+
+    def notifyError(self, error):
+        self.outputStream.notifyError(error)
+
+class WebcamVideoStream:
+    def __init__(self, camera, cameraServer, frameWidth, frameHeight, name="WebcamVideoStream"):
+        # initialize the video camera stream and read the first frame
+        # from the stream
+
+        #Automatically sets exposure to 0 to track tape
+        self.webcam = camera
+        self.webcam.setExposureManual(0)
+        #Some booleans so that we don't keep setting exposure over and over to the same value
+        self.autoExpose = False
+        self.prevValue = self.autoExpose
+        #Make a blank image to write on
+        self.img = np.zeros(shape=(frameWidth, frameHeight, 3), dtype=np.uint8)
+        #Gets the video
+        self.stream = cameraServer.getVideo(camera = camera)
+        (self.timestamp, self.img) = self.stream.grabFrame(self.img)
+
+        # initialize the thread name
+        self.name = name
+
+        # initialize the variable used to indicate if the thread should
+        # be stopped
+        self.stopped = False
+
+    def start(self):
+        # start the thread to read frames from the video stream
+        t = Thread(target=self.update, name=self.name, args=())
+        t.daemon = True
+        t.start()
+        return self
+
+    def update(self):
+        # keep looping infinitely until the thread is stopped
+        while True:
+            # if the thread indicator variable is set, stop the thread
+            if self.stopped:
+                return
+            #Boolean logic we don't keep setting exposure over and over to the same value
+            if self.autoExpose:
+
+                self.webcam.setExposureAuto()
+            else:
+
+                self.webcam.setExposureManual(0)
+            #gets the image and timestamp from cameraserver
+            (self.timestamp, self.img) = self.stream.grabFrame(self.img)
+
+    def read(self):
+        # return the frame most recently read
+        return self.timestamp, self.img
+
+    def stop(self):
+        # indicate that the thread should be stopped
+        self.stopped = True
+    def getError(self):
+        return self.stream.getError()
+
+################### END OF SCREAMING CHICKENS CODE ########################
+
 ################### OPENCV IMAGE PROCESSING ######################
 
 image_width = 256
 image_height = 144
 
+# Color Threshold the image
 upperGreen = np.array([104, 214, 255])
 lowerGreen = np.array([0, 48, 64])
+
+# Blur must be an odd number
+blur = 3
 
 diagonalView = math.radians(68.5)
 
@@ -41,6 +166,11 @@ V_FOCAL_LENGTH = image_height / (2*math.tan((verticalView/2)))
 
 def flipImage(frame):
     return cv2.flip(frame, -1)
+
+def blur(blurRadius, frame):
+    img = frame.copy()
+    blur = cv2.GaussianBlur(img, (blurRadius, blurRadius))
+    return blur
 
 def threshold_video(lower_color, upper_color, frame):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -240,25 +370,53 @@ if __name__ == "__main__":
         ntinst.startClientTeam(team)
 
     # start cameras
+    streams = []
     for config in cameraConfigs:
-        cameras.append(startCamera(config))
+        cs, cameraCapture = startCamera(config)
+        streams.append(cs)
+        cameras.append(cameraCapture)
 
     # start switched cameras
     for config in switchedCameraConfigs:
         startSwitchedCamera(config)
 ############################### END OF FRC VISION IMAGE CODE #######################
+    webcam = cameras[0]
+    cameraServer = streams[0]
 
-cap = cv2.VideoCapture(0)
+    cap = WebcamVideoStream(webcam, cameraServer, image_width, image_height).start()
 
-while True:
-    ret, frame = cap.read()
-    
-    if ret == True:
-        img = flipImage(frame)
-        hsv = threshold_video(lowerGreen, upperGreen, img)
-        contours = findTargets(img, hsv)
-    else:
-        break
+    img = np.zeros(shape=(image_height, image_width, 3), dtype=np.uint8)
 
-cv2.destroyAllWindows()
-cap.release()
+    streamViewer = VideoShow(image_width, image_height, cameraServer, frame=img, name="5442Vision").start()
+
+    tape = False
+    fps = FPS().start()
+
+    while True:
+        timestamp, frame = cap.read()
+        
+        if timestamp == 0:
+            streamViewer.notifyError(cap.getError());
+
+            continue
+
+        if(networkTable.getBoolean("Driver", False)):
+            cap.autoExpose = True
+            processed = frame
+        else:
+            cap.autoExpose = False
+            img = flipImage(frame)
+            blur = blur(greenBlur, img)
+            hsv = threshold_video(lowerGreen, upperGreen, blur)
+            processed = findTargets(img, hsv)
+        
+        networkTables.putNumber("VideoTimestamp", timestamp)
+        streamViewer.frame = processed
+
+        fps.update()
+
+        ntinst.flush()
+
+    fps.stop()
+    print("[INFO] elapsed time: {:.2f}".format(fps.elsapsed()))
+    print("[INFO] approx. FPS: {:.2f}".format(fps.stop()))
