@@ -16,12 +16,14 @@ from threading import Thread
 
 from cscore import CameraServer, MjpegServer, VideoSource, UsbCamera
 from networktables import NetworkTablesInstance
+from networktables import NetworkTables
 import ntcore
 import cv2
 import numpy as np
 import math
-
 ################################ SCREAMING CHICKENS CODE ############################
+
+import datetime
 
 class FPS:
 	def __init__(self):
@@ -149,7 +151,7 @@ upperGreen = np.array([104, 214, 255])
 lowerGreen = np.array([0, 48, 64])
 
 # Blur must be an odd number
-blur = 3
+greenBlur = 3
 
 diagonalView = math.radians(68.5)
 
@@ -169,7 +171,8 @@ def flipImage(frame):
 
 def blur(blurRadius, frame):
     img = frame.copy()
-    blur = cv2.GaussianBlur(img, (blurRadius, blurRadius))
+    ksize = int(6 * round(blurRadius) + 1)
+    blur = cv2.GaussianBlur(img, (ksize, ksize), round(blurRadius))
     return blur
 
 def threshold_video(lower_color, upper_color, frame):
@@ -206,7 +209,6 @@ class CameraConfig: pass
 team = None
 server = False
 cameraConfigs = []
-switchedCameraConfigs = []
 cameras = []
 
 def parseError(str):
@@ -237,27 +239,6 @@ def readCameraConfig(config):
     cam.config = config
 
     cameraConfigs.append(cam)
-    return True
-
-def readSwitchedCameraConfig(config):
-    """Read single switched camera configuration."""
-    cam = CameraConfig()
-
-    # name
-    try:
-        cam.name = config["name"]
-    except KeyError:
-        parseError("could not read switched camera name")
-        return False
-
-    # path
-    try:
-        cam.key = config["key"]
-    except KeyError:
-        parseError("switched camera '{}': could not read key".format(cam.name))
-        return False
-
-    switchedCameraConfigs.append(cam)
     return True
 
 def readConfig():
@@ -305,52 +286,18 @@ def readConfig():
         if not readCameraConfig(camera):
             return False
 
-    # switched cameras
-    if "switched cameras" in j:
-        for camera in j["switched cameras"]:
-            if not readSwitchedCameraConfig(camera):
-                return False
-
     return True
 
 def startCamera(config):
     """Start running the camera."""
     print("Starting camera '{}' on {}".format(config.name, config.path))
-    inst = CameraServer.getInstance()
+    cs = CameraServer.getInstance()
     camera = UsbCamera(config.name, config.path)
-    server = inst.startAutomaticCapture(camera=camera, return_server=True)
+    server = cs.startAutomaticCapture(camera=camera, return_server=True)
 
     camera.setConfigJson(json.dumps(config.config))
-    camera.setConnectionStrategy(VideoSource.ConnectionStrategy.kKeepOpen)
 
-    if config.streamConfig is not None:
-        server.setConfigJson(json.dumps(config.streamConfig))
-
-    return camera
-
-def startSwitchedCamera(config):
-    """Start running the switched camera."""
-    print("Starting switched camera '{}' on {}".format(config.name, config.key))
-    server = CameraServer.getInstance().addSwitchedCamera(config.name)
-
-    def listener(fromobj, key, value, isNew):
-        if isinstance(value, float):
-            i = int(value)
-            if i >= 0 and i < len(cameras):
-              server.setSource(cameras[i])
-        elif isinstance(value, str):
-            for i in range(len(cameraConfigs)):
-                if value == cameraConfigs[i].name:
-                    server.setSource(cameras[i])
-                    break
-
-    NetworkTablesInstance.getDefault().getEntry(config.key).addListener(
-        listener,
-        ntcore.constants.NT_NOTIFY_IMMEDIATE |
-        ntcore.constants.NT_NOTIFY_NEW |
-        ntcore.constants.NT_NOTIFY_UPDATE)
-
-    return server
+    return cs, camera
 
 if __name__ == "__main__":
     if len(sys.argv) >= 2:
@@ -362,6 +309,9 @@ if __name__ == "__main__":
 
     # start NetworkTables
     ntinst = NetworkTablesInstance.getDefault()
+    #Name of network table -- how the raspbery pi communicates with the robot
+    networkTable = NetworkTables.getTable("5442Vision")
+
     if server:
         print("Setting up NetworkTables server")
         ntinst.startServer()
@@ -376,10 +326,9 @@ if __name__ == "__main__":
         streams.append(cs)
         cameras.append(cameraCapture)
 
-    # start switched cameras
-    for config in switchedCameraConfigs:
-        startSwitchedCamera(config)
 ############################### END OF FRC VISION IMAGE CODE #######################
+    NetworkTables.initialize(server="10.54.42.2")
+
     webcam = cameras[0]
     cameraServer = streams[0]
 
@@ -406,11 +355,12 @@ if __name__ == "__main__":
         else:
             cap.autoExpose = False
             img = flipImage(frame)
-            blur = blur(greenBlur, img)
-            hsv = threshold_video(lowerGreen, upperGreen, blur)
-            processed = findTargets(img, hsv)
-        
-        networkTables.putNumber("VideoTimestamp", timestamp)
+            imgBlur = blur(greenBlur, img)
+            hsv = threshold_video(lowerGreen, upperGreen, imgBlur)
+            #processed = findTargets(img, hsv)
+            processed = hsv
+
+        networkTable.putNumber("VideoTimestamp", timestamp)
         streamViewer.frame = processed
 
         fps.update()
