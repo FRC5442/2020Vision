@@ -192,7 +192,7 @@ def findTargets(frame, mask):
     image = frame.copy
 
     if len(contours) != 0:
-        # image = findTape(contours, image, centerX, centerY)
+        image = findTape(contours, image, centerX, centerY)
         networkTable.putBoolean("tapeDetected", True)
     else:
         networkTable.putBoolean("tapeDetected", False)
@@ -233,11 +233,6 @@ def findTape(contours, image, centerX, centerY):
                     cx, cy = 0, 0
                 if(len(biggestCnts) < 13):
 
-                    # Calculates yaw of contour (horizontal position in degrees)
-                    #yaw = calculateYaw(cx, centerX, H_FOCAL_LENGTH)
-                    # Calculates yaw of contour (horizontal position in degrees)
-                    #pitch = calculatePitch(cy, centerY, V_FOCAL_LENGTH)
-
                     ##### DRAWS CONTOUR######
                     # Gets rotated bounding rectangle of contour
                     rect = cv2.minAreaRect(cnt)
@@ -250,9 +245,9 @@ def findTape(contours, image, centerX, centerY):
 
 
                     # Calculates yaw of contour (horizontal position in degrees)
-                    #yaw = calculateYaw(cx, centerX, H_FOCAL_LENGTH)
-                    # Calculates yaw of contour (horizontal position in degrees)
-                    #pitch = calculatePitch(cy, centerY, V_FOCAL_LENGTH)
+                    yaw = calculateYaw(cx, centerX, H_FOCAL_LENGTH)
+                    # Calculates pitch of contour (vertical position in degrees)
+                    pitch = calculatePitch(cy, centerY, V_FOCAL_LENGTH)
 
 
                     # Draws a vertical white line passing through center of contour
@@ -288,7 +283,6 @@ def findTape(contours, image, centerX, centerY):
         biggestCnts = sorted(biggestCnts, key=lambda x: x[0])
         # Target Checking
         for i in range(len(biggestCnts) - 1):
-            x = 0
 
             #x coords of contours
             cx1 = biggestCnts[i][0]
@@ -300,34 +294,35 @@ def findTape(contours, image, centerX, centerY):
 		    '''
             networkTable.putNumber("OffsetX", (cx1 - centerX))
             networkTable.putNumber("OffsetY", (cy1 - centerY))
-            networkTable.putNumber("Iterations", x)
             '''
 		    5442 EDIT END  
 		    '''
 
-            # If contour angles are opposite
-            if (np.sign(tilt1) != np.sign(tilt2)):
-                centerOfTarget = math.floor((cx1 + cx2) / 2)
-                if (tilt1 > 0):
-                    if (cx1 < cx2):
-                        continue
-                if (tilt2 > 0):
-                    if (cx2 < cx1):
-                        continue
-                x += 1
     #Check if there are targets seen
     if (len(targets) > 0):
         networkTable.putBoolean("tapeDetected", True)
-        networkTable.putBoolean("ranElse2", True)
         targets.sort(key=lambda x: math.fabs(x[0]))
 
     else:
         networkTable.putBoolean("tapeDetected", False)
-        networkTable.putBoolean("ranElse3", True)
 
     cv2.line(image, (round(centerX), screenHeight), (round(centerX), 0), (255, 255, 255), 2)
 
     return image
+
+# Uses trig and focal length of camera to find yaw.
+# Link to further explanation: https://docs.google.com/presentation/d/1ediRsI-oR3-kwawFJZ34_ZTlQS2SDBLjZasjzZ-eXbQ/pub?start=false&loop=false&slide=id.g12c083cffa_0_298
+def calculateYaw(pixelX, centerX, hFocalLength):
+    yaw = math.degrees(math.atan((pixelX - centerX) / hFocalLength))
+    return round(yaw)
+
+
+# Link to further explanation: https://docs.google.com/presentation/d/1ediRsI-oR3-kwawFJZ34_ZTlQS2SDBLjZasjzZ-eXbQ/pub?start=false&loop=false&slide=id.g12c083cffa_0_298
+def calculatePitch(pixelY, centerY, vFocalLength):
+    pitch = math.degrees(math.atan((pixelY - centerY) / vFocalLength))
+    # Just stopped working have to do this:
+    pitch *= -1
+    return round(pitch)
 
 ################### FRC VISION IMAGE CODE (WEB INTERFACE) #######################
 configFile = "/boot/frc.json"
@@ -455,15 +450,16 @@ if __name__ == "__main__":
         cameras.append(cameraCapture)
 
 ############################### END OF FRC VISION IMAGE CODE #######################
-    NetworkTables.initialize(server="10.54.42.2")
-
     webcam = cameras[0]
     cameraServer = streams[0]
 
+    # Starts the webcam stream
     cap = WebcamVideoStream(webcam, cameraServer, image_width, image_height).start()
 
+    # Allocates space for the processed image
     img = np.zeros(shape=(image_height, image_width, 3), dtype=np.uint8)
 
+    # Shows stream to shuffleboard
     streamViewer = VideoShow(image_width, image_height, cameraServer, frame=img, name="5442Vision").start()
 
     tape = False
@@ -485,8 +481,7 @@ if __name__ == "__main__":
             img = flipImage(frame)
             imgBlur = blur(greenBlur, img)
             hsv = threshold_video(lowerGreen, upperGreen, imgBlur)
-            #processed = findTargets(img, hsv)
-            processed = hsv
+            processed = findTargets(img, hsv)
 
         networkTable.putNumber("VideoTimestamp", timestamp)
         streamViewer.frame = processed
