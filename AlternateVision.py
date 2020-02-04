@@ -26,7 +26,6 @@ from networktables import NetworkTables
 import math
 ########### SET RESOLUTION TO 256x144 !!!! ############
 
-
 # import the necessary packages
 import datetime
 
@@ -386,9 +385,7 @@ def findTape(contours, image, centerX, centerY):
 
 # Checks if tape contours are worthy based off of contour area and (not currently) hull area
 def checkContours(cntSize, hullSize):
-    if cntSize > 10:
         
-
     return cntSize > (image_width / 6)
 
 #Forgot how exactly it works, but it works!
@@ -611,12 +608,14 @@ if __name__ == "__main__":
     fps = FPS().start()
     #TOTAL_FRAMES = 200;
     # loop forever
+    timeinitial = cap.read()
     while True:
 
 
         # Tell the CvSink to grab a frame from the camera and put it
         # in the source image.  If there is an error notify the output.
-        timestamp, img = cap.read()
+        #timestamp, img = cap.read()
+        timestamp, img = cap.read() - timeinitial
 
         #Uncomment if camera is mounted upside down
         frame = flipImage(img)

@@ -199,7 +199,141 @@ def findTargets(frame, mask):
 
     return image
 
-# TODO Make Detect Tape Function    
+# Draws Contours and finds center and yaw of vision targets
+# centerX is center x coordinate of image
+# centerY is center y coordinate of image
+def findTape(contours, image, centerX, centerY):
+    screenHeight, screenWidth, channels = image.shape;
+    #Seen vision targets (correct angle, adjacent to each other)
+    targets = []
+
+    if len(contours) >= 1:
+        #Sort contours by area size (biggest to smallest)
+        cntsSorted = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
+
+        biggestCnts = []
+        for cnt in cntsSorted:
+            # Get moments of contour; mainly for centroid
+            M = cv2.moments(cnt)
+            # Get convex hull (bounding polygon on contour)
+            hull = cv2.convexHull(cnt)
+            # Calculate Contour area
+            cntArea = cv2.contourArea(cnt)
+            # calculate area of convex hull
+            hullArea = cv2.contourArea(hull)
+            # Filters contours based off of size
+            if True:
+                ### MOSTLY DRAWING CODE, BUT CALCULATES IMPORTANT INFO ###
+                # Gets the centeroids of contour
+                if M["m00"] != 0:
+                    cx = int(M["m10"] / M["m00"])
+                    cy = int(M["m01"] / M["m00"])
+                else:
+                    cx, cy = 0, 0
+                if(len(biggestCnts) < 13):
+                    #### CALCULATES ROTATION OF CONTOUR BY FITTING ELLIPSE ##########
+                    rotation = getEllipseRotation(image, cnt)
+
+                    # Calculates yaw of contour (horizontal position in degrees)
+                    #yaw = calculateYaw(cx, centerX, H_FOCAL_LENGTH)
+                    # Calculates yaw of contour (horizontal position in degrees)
+                    #pitch = calculatePitch(cy, centerY, V_FOCAL_LENGTH)
+
+                    ##### DRAWS CONTOUR######
+                    # Gets rotated bounding rectangle of contour
+                    rect = cv2.minAreaRect(cnt)
+                    # Creates box around that rectangle
+                    box = cv2.boxPoints(rect)
+                    # Not exactly sure
+                    box = np.int0(box)
+                    # Draws rotated rectangle
+                    cv2.drawContours(image, [box], 0, (23, 184, 80), 3)
+
+
+                    # Calculates yaw of contour (horizontal position in degrees)
+                    #yaw = calculateYaw(cx, centerX, H_FOCAL_LENGTH)
+                    # Calculates yaw of contour (horizontal position in degrees)
+                    #pitch = calculatePitch(cy, centerY, V_FOCAL_LENGTH)
+
+
+                    # Draws a vertical white line passing through center of contour
+                    cv2.line(image, (cx, screenHeight), (cx, 0), (255, 255, 255))
+                    # Draws a white circle at center of contour
+                    cv2.circle(image, (cx, cy), 6, (255, 255, 255))
+
+                    # Draws the contours
+                    cv2.drawContours(image, [cnt], 0, (23, 184, 80), 1)
+
+                    # Gets the (x, y) and radius of the enclosing circle of contour
+                    (x, y), radius = cv2.minEnclosingCircle(cnt)
+                    # Rounds center of enclosing circle
+                    center = (int(x), int(y))
+                    # Rounds radius of enclosning circle
+                    radius = int(radius)
+                    # Makes bounding rectangle of contour
+                    rx, ry, rw, rh = cv2.boundingRect(cnt)
+                    boundingRect = cv2.boundingRect(cnt)
+                    # Draws countour of bounding rectangle and enclosing circle in green
+                    cv2.rectangle(image, (rx, ry), (rx + rw, ry + rh), (23, 184, 80), 1)
+
+                    cv2.circle(image, center, radius, (23, 184, 80), 1)
+
+                    # Appends important info to array
+                    if not biggestCnts:
+                         biggestCnts.append([cx, cy, rotation])
+                    elif [cx, cy, rotation] not in biggestCnts:
+                         biggestCnts.append([cx, cy, rotation])
+
+
+        # Sorts array based on coordinates (leftmost to rightmost) to make sure contours are adjacent
+        biggestCnts = sorted(biggestCnts, key=lambda x: x[0])
+        # Target Checking
+        for i in range(len(biggestCnts) - 1):
+            x = 0
+            #Rotation of two adjacent contours
+            tilt1 = biggestCnts[i][2]
+            tilt2 = biggestCnts[i + 1][2]
+
+            #x coords of contours
+            cx1 = biggestCnts[i][0]
+            cx2 = biggestCnts[i + 1][0]
+
+            cy1 = biggestCnts[i][1]
+            cy2 = biggestCnts[i + 1][1]
+			
+            '''
+		    5442 EDIT START 
+		    '''
+            networkTable.putNumber("OffsetX", (cx1 - centerX))
+            networkTable.putNumber("OffsetY", (cy1 - centerY))
+            networkTable.putNumber("Iterations", x)
+            '''
+		    5442 EDIT END  
+		    '''
+
+            # If contour angles are opposite
+            if (np.sign(tilt1) != np.sign(tilt2)):
+                centerOfTarget = math.floor((cx1 + cx2) / 2)
+                if (tilt1 > 0):
+                    if (cx1 < cx2):
+                        continue
+                if (tilt2 > 0):
+                    if (cx2 < cx1):
+                        continue
+                x += 1
+    #Check if there are targets seen
+    if (len(targets) > 0):
+        networkTable.putBoolean("tapeDetected", True)
+        networkTable.putBoolean("ranElse2", True)
+        targets.sort(key=lambda x: math.fabs(x[0]))
+
+    else:
+        networkTable.putBoolean("tapeDetected", False)
+        networkTable.putBoolean("ranElse3", True)
+
+    cv2.line(image, (round(centerX), screenHeight), (round(centerX), 0), (255, 255, 255), 2)
+
+    return image
 
 ################### FRC VISION IMAGE CODE (WEB INTERFACE) #######################
 configFile = "/boot/frc.json"
