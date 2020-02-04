@@ -222,7 +222,8 @@ def findTape(contours, image, centerX, centerY):
             # calculate area of convex hull
             hullArea = cv2.contourArea(hull)
             # Filters contours based off of size
-            if True:
+            if True: # Replaced code to check size of contours in relation to image_width
+
                 ### MOSTLY DRAWING CODE, BUT CALCULATES IMPORTANT INFO ###
                 # Gets the centeroids of contour
                 if M["m00"] != 0:
@@ -231,8 +232,6 @@ def findTape(contours, image, centerX, centerY):
                 else:
                     cx, cy = 0, 0
                 if(len(biggestCnts) < 13):
-                    #### CALCULATES ROTATION OF CONTOUR BY FITTING ELLIPSE ##########
-                    rotation = getEllipseRotation(image, cnt)
 
                     # Calculates yaw of contour (horizontal position in degrees)
                     #yaw = calculateYaw(cx, centerX, H_FOCAL_LENGTH)
@@ -280,9 +279,9 @@ def findTape(contours, image, centerX, centerY):
 
                     # Appends important info to array
                     if not biggestCnts:
-                         biggestCnts.append([cx, cy, rotation])
-                    elif [cx, cy, rotation] not in biggestCnts:
-                         biggestCnts.append([cx, cy, rotation])
+                         biggestCnts.append([cx, cy])
+                    elif [cx, cy] not in biggestCnts:
+                         biggestCnts.append([cx, cy])
 
 
         # Sorts array based on coordinates (leftmost to rightmost) to make sure contours are adjacent
@@ -290,16 +289,11 @@ def findTape(contours, image, centerX, centerY):
         # Target Checking
         for i in range(len(biggestCnts) - 1):
             x = 0
-            #Rotation of two adjacent contours
-            tilt1 = biggestCnts[i][2]
-            tilt2 = biggestCnts[i + 1][2]
 
             #x coords of contours
             cx1 = biggestCnts[i][0]
-            cx2 = biggestCnts[i + 1][0]
 
             cy1 = biggestCnts[i][1]
-            cy2 = biggestCnts[i + 1][1]
 			
             '''
 		    5442 EDIT START 
