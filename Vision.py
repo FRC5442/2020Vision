@@ -189,7 +189,7 @@ def findTargets(frame, mask):
     centerX = (screenWidth / 2) - .5
     centerY = (screenHeight / 2) - .5
 
-    image = frame.copy
+    image = frame.copy()
 
     if len(contours) != 0:
         image = findTape(contours, image, centerX, centerY)
@@ -203,7 +203,7 @@ def findTargets(frame, mask):
 # centerX is center x coordinate of image
 # centerY is center y coordinate of image
 def findTape(contours, image, centerX, centerY):
-    screenHeight, screenWidth, channels = image.shape;
+    screenHeight, screenWidth, channels = image.shape
     #Seen vision targets (correct angle, adjacent to each other)
     targets = []
 
@@ -246,9 +246,10 @@ def findTape(contours, image, centerX, centerY):
 
                     # Calculates yaw of contour (horizontal position in degrees)
                     yaw = calculateYaw(cx, centerX, H_FOCAL_LENGTH)
+                    networkTable.putNumber("Yaw", yaw)
                     # Calculates pitch of contour (vertical position in degrees)
                     pitch = calculatePitch(cy, centerY, V_FOCAL_LENGTH)
-
+                    networkTable.putNumber("Pitch", pitch)
 
                     # Draws a vertical white line passing through center of contour
                     cv2.line(image, (cx, screenHeight), (cx, 0), (255, 255, 255))
@@ -274,29 +275,27 @@ def findTape(contours, image, centerX, centerY):
 
                     # Appends important info to array
                     if not biggestCnts:
-                         biggestCnts.append([cx, cy])
+                         biggestCnts.append([cx, cy, cntArea])
                     elif [cx, cy] not in biggestCnts:
-                         biggestCnts.append([cx, cy])
+                         biggestCnts.append([cx, cy, cntArea])
 
 
-        # Sorts array based on coordinates (leftmost to rightmost) to make sure contours are adjacent
-        biggestCnts = sorted(biggestCnts, key=lambda x: x[0])
-        # Target Checking
-        for i in range(len(biggestCnts) - 1):
+        # Sorts array based on area (leftmost to rightmost) to make sure contours are adjacent
+        biggestCnts = sorted(biggestCnts, key=lambda x: x[2], reverse=True)
 
-            #x coords of contours
-            cx1 = biggestCnts[i][0]
+        #x coords of contours
+        cx1 = biggestCnts[0][0]
 
-            cy1 = biggestCnts[i][1]
+        cy1 = biggestCnts[0][1]
 			
-            '''
-		    5442 EDIT START 
-		    '''
-            networkTable.putNumber("OffsetX", (cx1 - centerX))
-            networkTable.putNumber("OffsetY", (cy1 - centerY))
-            '''
-		    5442 EDIT END  
-		    '''
+        '''
+		5442 EDIT START 
+	    '''
+        networkTable.putNumber("OffsetX", (cx1 - centerX))
+        networkTable.putNumber("OffsetY", (cy1 - centerY))
+        '''
+	    5442 EDIT END  
+		'''
 
     #Check if there are targets seen
     if (len(targets) > 0):
