@@ -153,6 +153,8 @@ lowerGreen = np.array([53, 0, 17])
 # Blur must be an odd number
 greenBlur = 3
 
+coverageArea = 112.5/671.5
+
 diagonalView = math.radians(68.5)
 
 horizontalAspect = 16
@@ -223,8 +225,14 @@ def findTape(contours, image, centerX, centerY):
             cntPerim = cv2.arcLength(cnt, True)
             # calculate area of convex hull
             hullArea = cv2.contourArea(hull)
+
+            rx, ry, rw, rh = cv2.boundingRect(cnt)
+
+            targetArea = cntArea/(rw*rh)
+            similarity = (targetArea/coverageArea)*100
+            
             # Filters contours based off of size
-            if cntArea >= 10 and cntPerim >= 65: # Checks contour size
+            if similarity > 50 and similarity < 150: # Checks contour size
 
                 ### MOSTLY DRAWING CODE, BUT CALCULATES IMPORTANT INFO ###
                 # Gets the centeroids of contour
@@ -268,7 +276,6 @@ def findTape(contours, image, centerX, centerY):
                     # Rounds radius of enclosning circle
                     radius = int(radius)
                     # Makes bounding rectangle of contour
-                    rx, ry, rw, rh = cv2.boundingRect(cnt)
                     boundingRect = cv2.boundingRect(cnt)
                     # Draws countour of bounding rectangle and enclosing circle in green
                     cv2.rectangle(image, (rx, ry), (rx + rw, ry + rh), (23, 184, 80), 1)
