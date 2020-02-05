@@ -229,10 +229,10 @@ def findTape(contours, image, centerX, centerY):
             rx, ry, rw, rh = cv2.boundingRect(cnt)
 
             targetArea = cntArea/(rw*rh)
-            similarity = (targetArea/coverageArea)*100
+            similarity = (targetArea/coverageArea)
             
             # Filters contours based off of size
-            if similarity > 50 and similarity < 150: # Checks contour size
+            if similarity >= 0.5 and similarity <= 1.5: # Checks contour size
 
                 ### MOSTLY DRAWING CODE, BUT CALCULATES IMPORTANT INFO ###
                 # Gets the centeroids of contour
@@ -292,10 +292,9 @@ def findTape(contours, image, centerX, centerY):
         # Sorts array based on area (leftmost to rightmost) to make sure contours are adjacent
         biggestCnts = sorted(biggestCnts, key=lambda x: x[2], reverse=True)
 
-        if len(biggestCnts) > 0:
+        if len(biggestCnts) >= 1:
             #x coords of contours
             cx1 = biggestCnts[0][0]
-
             cy1 = biggestCnts[0][1]
                 
             '''
