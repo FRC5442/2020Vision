@@ -16,20 +16,20 @@
       <grip:Input step="1" socket="0"/>
       <grip:Input step="1" socket="1">
         <value>
-          <double>40.67796610169491</double>
-          <double>113.5676625659051</double>
+          <double>52.54237288135594</double>
+          <double>103.22495048940998</double>
         </value>
       </grip:Input>
       <grip:Input step="1" socket="2">
         <value>
-          <double>0.031128924627080223</double>
-          <double>185.56715704413503</double>
+          <double>0.0</double>
+          <double>192.25834797891036</double>
         </value>
       </grip:Input>
       <grip:Input step="1" socket="3">
         <value>
-          <double>38.4180790960452</double>
-          <double>140.72056239015816</double>
+          <double>16.80790960451977</double>
+          <double>116.0720562390158</double>
         </value>
       </grip:Input>
       <grip:Output step="1" socket="0" previewed="true"/>
@@ -44,34 +44,34 @@
     <grip:Step name="Filter Contours">
       <grip:Input step="3" socket="0"/>
       <grip:Input step="3" socket="1">
-        <value>10.0</value>
+        <value>0.0</value>
       </grip:Input>
       <grip:Input step="3" socket="2">
-        <value>65.0</value>
+        <value>34.0</value>
       </grip:Input>
       <grip:Input step="3" socket="3">
-        <value>20.0</value>
+        <value>0.0</value>
       </grip:Input>
       <grip:Input step="3" socket="4">
-        <value>500.0</value>
+        <value>95.0</value>
       </grip:Input>
       <grip:Input step="3" socket="5">
-        <value>9.0</value>
+        <value>0.0</value>
       </grip:Input>
       <grip:Input step="3" socket="6">
-        <value>500.0</value>
+        <value>100.0</value>
       </grip:Input>
       <grip:Input step="3" socket="7">
         <value>
-          <double>2.722323049001815</double>
-          <double>100.0</double>
+          <double>0.0</double>
+          <double>29.292929292929294</double>
         </value>
       </grip:Input>
       <grip:Input step="3" socket="8">
-        <value>24.0</value>
+        <value>100.0</value>
       </grip:Input>
       <grip:Input step="3" socket="9">
-        <value>10.0</value>
+        <value>0.0</value>
       </grip:Input>
       <grip:Input step="3" socket="10">
         <value>1.0</value>
@@ -92,12 +92,12 @@
       <grip:Input step="0" socket="0"/>
     </grip:Connection>
     <grip:Connection>
-      <grip:Output step="1" socket="0" previewed="true"/>
-      <grip:Input step="2" socket="0"/>
-    </grip:Connection>
-    <grip:Connection>
       <grip:Output step="2" socket="0" previewed="true"/>
       <grip:Input step="3" socket="0"/>
+    </grip:Connection>
+    <grip:Connection>
+      <grip:Output step="1" socket="0" previewed="true"/>
+      <grip:Input step="2" socket="0"/>
     </grip:Connection>
     <grip:Connection>
       <grip:Output step="0" socket="0" previewed="true"/>
