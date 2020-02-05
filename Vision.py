@@ -147,8 +147,8 @@ image_width = 256
 image_height = 144
 
 # Color Threshold the image
-upperGreen = np.array([104, 214, 255])
-lowerGreen = np.array([0, 48, 64])
+upperGreen = np.array([114, 186, 141])
+lowerGreen = np.array([41, 0, 38])
 
 # Blur must be an odd number
 greenBlur = 3
@@ -183,7 +183,7 @@ def threshold_video(lower_color, upper_color, frame):
     return mask
 
 def findTargets(frame, mask):
-    _, contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_KCOS)
+    _, contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     screenHeight, screenWidth, _ = frame.shape
 
     centerX = (screenWidth / 2) - .5
@@ -219,10 +219,12 @@ def findTape(contours, image, centerX, centerY):
             hull = cv2.convexHull(cnt)
             # Calculate Contour area
             cntArea = cv2.contourArea(cnt)
+            # Calculate Contour Perimeter
+            cntPerim = cv2.arcLength(cnt, True)
             # calculate area of convex hull
             hullArea = cv2.contourArea(hull)
             # Filters contours based off of size
-            if True: # Replaced code to check size of contours in relation to image_width
+            if cntArea >= 10 and cntPerim >= 65: # Checks contour size
 
                 ### MOSTLY DRAWING CODE, BUT CALCULATES IMPORTANT INFO ###
                 # Gets the centeroids of contour
@@ -283,19 +285,20 @@ def findTape(contours, image, centerX, centerY):
         # Sorts array based on area (leftmost to rightmost) to make sure contours are adjacent
         biggestCnts = sorted(biggestCnts, key=lambda x: x[2], reverse=True)
 
-        #x coords of contours
-        cx1 = biggestCnts[0][0]
+        if len(biggestCnts) > 0:
+            #x coords of contours
+            cx1 = biggestCnts[0][0]
 
-        cy1 = biggestCnts[0][1]
-			
-        '''
-		5442 EDIT START 
-	    '''
-        networkTable.putNumber("OffsetX", (cx1 - centerX))
-        networkTable.putNumber("OffsetY", (cy1 - centerY))
-        '''
-	    5442 EDIT END  
-		'''
+            cy1 = biggestCnts[0][1]
+                
+            '''
+            5442 EDIT START 
+            '''
+            networkTable.putNumber("OffsetX", (cx1 - centerX))
+            networkTable.putNumber("OffsetY", (cy1 - centerY))
+            '''
+            5442 EDIT END  
+            '''
 
     #Check if there are targets seen
     if (len(targets) > 0):
@@ -478,8 +481,8 @@ if __name__ == "__main__":
         else:
             cap.autoExpose = False
             img = flipImage(frame)
-            imgBlur = blur(greenBlur, img)
-            hsv = threshold_video(lowerGreen, upperGreen, imgBlur)
+            #imgBlur = blur(greenBlur, img)
+            hsv = threshold_video(lowerGreen, upperGreen, img)
             processed = findTargets(img, hsv)
 
         networkTable.putNumber("VideoTimestamp", timestamp)

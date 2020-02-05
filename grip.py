@@ -16,16 +16,10 @@ class Grip:
 
         self.cv_flip_output = None
 
-        self.__blur_input = self.cv_flip_output
-        self.__blur_type = BlurType.Gaussian_Blur
-        self.__blur_radius = 1.8018018018018018
-
-        self.blur_output = None
-
-        self.__hsv_threshold_input = self.blur_output
-        self.__hsv_threshold_hue = [37.23021582733813, 78.48484848484848]
-        self.__hsv_threshold_saturation = [0.0, 124.06565656565658]
-        self.__hsv_threshold_value = [25.22482014388489, 42.50000000000001]
+        self.__hsv_threshold_input = self.cv_flip_output
+        self.__hsv_threshold_hue = [40.67796610169491, 113.5676625659051]
+        self.__hsv_threshold_saturation = [0.031128924627079613, 140.49139946837744]
+        self.__hsv_threshold_value = [38.4180790960452, 112.81652198611778]
 
         self.hsv_threshold_output = None
 
@@ -35,15 +29,15 @@ class Grip:
         self.find_contours_output = None
 
         self.__filter_contours_contours = self.find_contours_output
-        self.__filter_contours_min_area = 0.0
-        self.__filter_contours_min_perimeter = 0.0
+        self.__filter_contours_min_area = 6.0
+        self.__filter_contours_min_perimeter = 65.0
         self.__filter_contours_min_width = 0.0
-        self.__filter_contours_max_width = 1000.0
+        self.__filter_contours_max_width = 95.0
         self.__filter_contours_min_height = 0.0
-        self.__filter_contours_max_height = 500.0
-        self.__filter_contours_solidity = [7.194244604316546, 100.0]
-        self.__filter_contours_max_vertices = 46.0
-        self.__filter_contours_min_vertices = 15.0
+        self.__filter_contours_max_height = 100.0
+        self.__filter_contours_solidity = [0.0, 29.292929292929294]
+        self.__filter_contours_max_vertices = 100.0
+        self.__filter_contours_min_vertices = 0.0
         self.__filter_contours_min_ratio = 1.0
         self.__filter_contours_max_ratio = 1000.0
 
@@ -62,12 +56,8 @@ class Grip:
         self.__cv_flip_src = source0
         (self.cv_flip_output) = self.__cv_flip(self.__cv_flip_src, self.__cv_flip_flipcode)
 
-        # Step Blur0:
-        self.__blur_input = self.cv_flip_output
-        (self.blur_output) = self.__blur(self.__blur_input, self.__blur_type, self.__blur_radius)
-
         # Step HSV_Threshold0:
-        self.__hsv_threshold_input = self.blur_output
+        self.__hsv_threshold_input = self.cv_flip_output
         (self.hsv_threshold_output) = self.__hsv_threshold(self.__hsv_threshold_input, self.__hsv_threshold_hue, self.__hsv_threshold_saturation, self.__hsv_threshold_value)
 
         # Step Find_Contours0:
@@ -93,28 +83,6 @@ class Grip:
             The flipped numpy.ndarray.
         """
         return cv2.flip(src, flipcode.value)
-
-    @staticmethod
-    def __blur(src, type, radius):
-        """Softens an image using one of several filters.
-        Args:
-            src: The source mat (numpy.ndarray).
-            type: The blurType to perform represented as an int.
-            radius: The radius for the blur as a float.
-        Returns:
-            A numpy.ndarray that has been blurred.
-        """
-        if(type is BlurType.Box_Blur):
-            ksize = int(2 * round(radius) + 1)
-            return cv2.blur(src, (ksize, ksize))
-        elif(type is BlurType.Gaussian_Blur):
-            ksize = int(6 * round(radius) + 1)
-            return cv2.GaussianBlur(src, (ksize, ksize), round(radius))
-        elif(type is BlurType.Median_Filter):
-            ksize = int(2 * round(radius) + 1)
-            return cv2.medianBlur(src, ksize)
-        else:
-            return cv2.bilateralFilter(src, -1, round(radius), round(radius))
 
     @staticmethod
     def __hsv_threshold(input, hue, sat, val):
@@ -207,5 +175,4 @@ class Grip:
 
 
 FlipCode = Enum('FlipCode', [('X_AXIS' , 0),  ('Y_AXIS', 1), ('BOTH_AXES', -1)])
-BlurType = Enum('BlurType', 'Box_Blur Gaussian_Blur Median_Filter Bilateral_Filter')
 
