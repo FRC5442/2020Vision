@@ -1,0 +1,13 @@
+Parellelogram
+Length - 20in
+Width - 2in
+Area - 40in^2
+
+Trapazoid
+Short Length - 15.125in
+Long Length - 17.375in
+Width - 2in
+Area - 32.5in^2
+
+Total Area - 112.5in^2
+Bounding Area - 671.5in^2
