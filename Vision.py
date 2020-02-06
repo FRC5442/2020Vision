@@ -232,7 +232,7 @@ def findTape(contours, image, centerX, centerY):
             similarity = (targetArea/coverageArea)
             
             # Filters contours based off of size
-            if similarity >= 0.75 and similarity <= 1.25: # Checks contour size
+            if similarity >= 0.5 and similarity <= 1.5: # Checks contour size
 
                 ### MOSTLY DRAWING CODE, BUT CALCULATES IMPORTANT INFO ###
                 # Gets the centeroids of contour
@@ -490,6 +490,7 @@ if __name__ == "__main__":
             #imgBlur = blur(greenBlur, img)
             hsv = threshold_video(lowerGreen, upperGreen, img)
             processed = findTargets(img, hsv)
+            #processed = hsv # For Debugging Purposes
 
         networkTable.putNumber("VideoTimestamp", timestamp)
         streamViewer.frame = processed
