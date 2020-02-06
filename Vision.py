@@ -147,8 +147,8 @@ image_width = 256
 image_height = 144
 
 # Color Threshold the image
-upperGreen = np.array([103, 192, 116])
-lowerGreen = np.array([53, 0, 17])
+upperGreen = np.array([105, 215, 96])
+lowerGreen = np.array([0, 0, 34])
 
 # Blur must be an odd number
 greenBlur = 3
@@ -232,7 +232,7 @@ def findTape(contours, image, centerX, centerY):
             similarity = (targetArea/coverageArea)
             
             # Filters contours based off of size
-            if similarity >= 0.5 and similarity <= 1.5: # Checks contour size
+            if similarity >= 0.75 and similarity <= 1.25: # Checks contour size
 
                 ### MOSTLY DRAWING CODE, BUT CALCULATES IMPORTANT INFO ###
                 # Gets the centeroids of contour
