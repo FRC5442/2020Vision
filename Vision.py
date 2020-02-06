@@ -226,13 +226,16 @@ def findTape(contours, image, centerX, centerY):
             # calculate area of convex hull
             hullArea = cv2.contourArea(hull)
 
+            solidity = [0.0, 29.3]
+            solid = 100 * cntArea / hullArea
+
             rx, ry, rw, rh = cv2.boundingRect(cnt)
 
             targetArea = cntArea/(rw*rh)
             similarity = (targetArea/coverageArea)
             
             # Filters contours based off of size
-            if similarity >= 0.5 and similarity <= 1.5: # Checks contour size
+            if (rw*rh) >= 34 and rw <= 95 and rh <=100 and len(cnt) <= 100 and solid >= solidity[0] and solid >= solidity[1]: # Checks contour size
 
                 ### MOSTLY DRAWING CODE, BUT CALCULATES IMPORTANT INFO ###
                 # Gets the centeroids of contour
