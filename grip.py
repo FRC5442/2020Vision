@@ -17,9 +17,9 @@ class Grip:
         self.cv_flip_output = None
 
         self.__hsv_threshold_input = self.cv_flip_output
-        self.__hsv_threshold_hue = [40.67796610169491, 113.5676625659051]
-        self.__hsv_threshold_saturation = [0.031128924627079613, 140.49139946837744]
-        self.__hsv_threshold_value = [38.4180790960452, 112.81652198611778]
+        self.__hsv_threshold_hue = [0.0, 105.48876033471016]
+        self.__hsv_threshold_saturation = [0.0, 214.66608084358523]
+        self.__hsv_threshold_value = [33.61581920903954, 95.90509666080843]
 
         self.hsv_threshold_output = None
 
@@ -29,8 +29,8 @@ class Grip:
         self.find_contours_output = None
 
         self.__filter_contours_contours = self.find_contours_output
-        self.__filter_contours_min_area = 6.0
-        self.__filter_contours_min_perimeter = 65.0
+        self.__filter_contours_min_area = 0.0
+        self.__filter_contours_min_perimeter = 34.0
         self.__filter_contours_min_width = 0.0
         self.__filter_contours_max_width = 95.0
         self.__filter_contours_min_height = 0.0
