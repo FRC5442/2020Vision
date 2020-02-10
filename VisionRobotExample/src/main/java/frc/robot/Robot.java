@@ -10,6 +10,10 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.EntryListenerFlags;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -18,6 +22,12 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * project.
  */
 public class Robot extends TimedRobot {
+  NetworkTableEntry tapeDetected;
+  NetworkTableEntry xOffset;
+  NetworkTableEntry yOffset;
+  NetworkTableEntry yaw;
+  NetworkTableEntry pitch;
+
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
@@ -31,6 +41,17 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
+
+    NetworkTableInstance inst = NetworkTableInstance.getDefault();
+    NetworkTable visionTable = inst.getTable("5442Vision");
+
+    tapeDetected = visionTable.getEntry("tapeDetected");
+    xOffset = visionTable.getEntry("xOffset");
+    yOffset = visionTable.getEntry("yOffset");
+    yaw = visionTable.getEntry("yaw");
+    pitch = visionTable.getEntry("pitch");
+    
+    inst.startClientTeam(5442);
   }
 
   /**
@@ -47,6 +68,10 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
+
+    tapeDetected.addListener(event -> {
+      System.out.println("tapeDetected changed value: " + value.getValue());
+    }), EntryListenerFlags.kNew | EntryListenerFlags.kUpdate);
   }
 
   /**
