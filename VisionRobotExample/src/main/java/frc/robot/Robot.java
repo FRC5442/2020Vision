@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.EntryListenerFlags;
+import edu.wpi.first.wpilibj.smartdashboard.*;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -22,15 +22,13 @@ import edu.wpi.first.networktables.EntryListenerFlags;
  * project.
  */
 public class Robot extends TimedRobot {
-  NetworkTableEntry tapeDetected;
-  NetworkTableEntry xOffset;
-  NetworkTableEntry yOffset;
-  NetworkTableEntry yaw;
-  NetworkTableEntry pitch;
-
   private Command m_autonomousCommand;
 
-  private RobotContainer m_robotContainer;
+  private RobotContainer m_robotContainer;  
+
+  NetworkTableEntry tapeDetectedEntry;
+  boolean tapeDetected;
+  boolean newTapeDetected;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -44,14 +42,8 @@ public class Robot extends TimedRobot {
 
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     NetworkTable visionTable = inst.getTable("5442Vision");
-
-    tapeDetected = visionTable.getEntry("tapeDetected");
-    xOffset = visionTable.getEntry("xOffset");
-    yOffset = visionTable.getEntry("yOffset");
-    yaw = visionTable.getEntry("yaw");
-    pitch = visionTable.getEntry("pitch");
-    
-    inst.startClientTeam(5442);
+    tapeDetectedEntry = visionTable.getEntry("tapeDetected");
+    tapeDetected = tapeDetectedEntry.getBoolean(false);
   }
 
   /**
@@ -69,9 +61,11 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
 
-    tapeDetected.addListener(event -> {
-      System.out.println("tapeDetected changed value: " + value.getValue());
-    }), EntryListenerFlags.kNew | EntryListenerFlags.kUpdate);
+    newTapeDetected = tapeDetectedEntry.getBoolean(false);
+    if (newTapeDetected != tapeDetected) {
+      System.out.println("tapeDetected value changed: " + newTapeDetected);
+      tapeDetected = newTapeDetected;
+    }
   }
 
   /**
