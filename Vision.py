@@ -233,13 +233,16 @@ def findTape(contours, image, centerX, centerY):
                 solid = 100 * cntArea / hullArea
             '''
 
-            rx, ry, rw, rh = cv2.boundingRect(cnt)
+            rx, ry, rw, rh = cv2.boundingRect(cnt) # Creates Bounding Rectangle
 
+            # (Optional) Coverage Area Filtering
+            '''
             targetArea = cntArea/(rw*rh)
-            similarity = (targetArea/coverageArea)
-            
-            # Filters contours based off of size
-            if (rw*rh) >= 34 and rw <= 95 and rh <=100 and len(cnt) <= 100: # Checks contour size
+            similarity = (targetArea/coverageArea)s
+            '''
+
+            # Filters contours based off of size, width, height, and verticies
+            if (rw*rh) >= 34 and rw <= 95 and rh <=100 and len(cnt) <= 100: # Checks contour variables
 
                 ### MOSTLY DRAWING CODE, BUT CALCULATES IMPORTANT INFO ###
                 # Gets the centeroids of contour
@@ -304,14 +307,8 @@ def findTape(contours, image, centerX, centerY):
             cx1 = biggestCnts[0][0]
             cy1 = biggestCnts[0][1]
                 
-            '''
-            5442 EDIT START 
-            '''
             networkTable.putNumber("OffsetX", (cx1 - centerX))
             networkTable.putNumber("OffsetY", (cy1 - centerY))
-            '''
-            5442 EDIT END  
-            '''
 
     #Check if there are targets seen
     if (len(targets) > 0):
