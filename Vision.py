@@ -576,9 +576,9 @@ if __name__ == "__main__":
         
         connected = lidar.connect(1)
         if connected <= -1:
-            print ("Not Connected")
+            networkTable.putBoolean("lidarConnected", False)
         else:
-            print ("Connected")
+            networkTable.putBoolean("lidarConnected", True)
         
         distanceCM = lidar.getDistance()
         distanceM = distanceCM / 100
