@@ -582,7 +582,7 @@ if __name__ == "__main__":
         
         distanceCM = lidar.getDistance()
         distanceM = distanceCM / 100
-        distanceIN = distanceCM * 2.54
+        distanceIN = distanceCM / 2.54
         distanceFT = distanceIN / 12
 
         networkTable.putNumber("Distance(cm)", distanceCM)
