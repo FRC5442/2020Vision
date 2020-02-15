@@ -21,6 +21,7 @@ import ntcore
 import cv2
 import numpy as np
 import math
+import smbus
 ################################ SCREAMING CHICKENS CODE ############################
 
 import datetime
@@ -141,7 +142,79 @@ class WebcamVideoStream:
 
 ################### END OF SCREAMING CHICKENS CODE ########################
 
+class Lidar_Lite():
+  def __init__(self):
+    self.address = 0x62
+    self.distWriteReg = 0x00
+    self.distWriteVal = 0x04
+    self.distReadReg1 = 0x8f
+    self.distReadReg2 = 0x10
+    self.velWriteReg = 0x04
+    self.velWriteVal = 0x08
+    self.velReadReg = 0x09
+
+  def connect(self, bus):
+    try:
+      self.bus = smbus.SMBus(bus)
+      time.sleep(0.5)
+      return 0
+    except:
+      return -1
+
+  def writeAndWait(self, register, value):
+    self.bus.write_byte_data(self.address, register, value)
+    time.sleep(0.02)
+
+  def readAndWait(self, register):
+    res = self.bus.read_byte_data(self.address, register)
+    time.sleep(0.02)
+    return res
+
+  def readDistAndWait(self, register):
+    res = self.bus.read_i2c_block_data(self.address, register, 2)
+    time.sleep(0.02)
+    return (res[0] << 8 | res[1])
+
+  def getDistance(self):
+    self.writeAndWait(self.distWriteReg, self.distWriteVal)
+    dist = self.readDistAndWait(self.distReadReg1)
+    return dist
+
+  def getVelocity(self):
+    self.writeAndWait(self.distWriteReg, self.distWriteVal)
+    self.writeAndWait(self.velWriteReg, self.velWriteVal)
+    vel = self.readAndWait(self.velReadReg)
+    return self.signedInt(vel)
+
+  def signedInt(self, value):
+    if value > 127:
+      return (256-value) * (-1)
+    else:
+      return value
+
+'''
+class Lidar:
+    def __init__(self):
+        lidar = None
+
+    def start(self):
+        lidar = Lidar_Lite
+
+        connected = lidar.connect(1)
+
+        if connected < -1:
+            print ("Note Connected")
+            self.start()
+        else:
+            print ("Lidar Connected")
+
+    def getDistance(self):
+        distance = lidar.getDistance()
+        return distance
+'''
 ################### OPENCV IMAGE PROCESSING ######################
+
+
 
 image_width = 256
 image_height = 144
@@ -498,6 +571,24 @@ if __name__ == "__main__":
 
         networkTable.putNumber("VideoTimestamp", timestamp)
         streamViewer.frame = processed
+
+        lidar = Lidar_Lite()
+        
+        connected = lidar.connect(1)
+        if connected <= -1:
+            print ("Not Connected")
+        else:
+            print ("Connected")
+        
+        distanceCM = lidar.getDistance()
+        distanceM = distanceCM / 100
+        distanceIN = distanceCM * 2.54
+        distanceFT = distanceIN / 12
+
+        networkTable.putNumber("Distance(cm)", distanceCM)
+        networkTable.putNumber("Distance(m)", distanceM)
+        networkTable.putNumber("Distance(in)", distanceIN)
+        networkTable.putNumber("Distance(ft)", distanceFT)
 
         fps.update()
 
