@@ -44,7 +44,7 @@
     <grip:Step name="Filter Contours">
       <grip:Input step="3" socket="0"/>
       <grip:Input step="3" socket="1">
-        <value>0.0</value>
+        <value>26.0</value>
       </grip:Input>
       <grip:Input step="3" socket="2">
         <value>34.0</value>
@@ -77,7 +77,7 @@
         <value>1.0</value>
       </grip:Input>
       <grip:Input step="3" socket="11">
-        <value>1000.0</value>
+        <value>5.0</value>
       </grip:Input>
       <grip:Output step="3" socket="0" previewed="true"/>
     </grip:Step>
@@ -87,6 +87,10 @@
     </grip:Step>
   </steps>
   <connections>
+    <grip:Connection>
+      <grip:Output source="0" socket="0" previewed="false"/>
+      <grip:Input step="0" socket="0"/>
+    </grip:Connection>
     <grip:Connection>
       <grip:Output step="0" socket="0" previewed="true"/>
       <grip:Input step="1" socket="0"/>
@@ -102,10 +106,6 @@
     <grip:Connection>
       <grip:Output step="1" socket="0" previewed="true"/>
       <grip:Input step="2" socket="0"/>
-    </grip:Connection>
-    <grip:Connection>
-      <grip:Output source="0" socket="0" previewed="false"/>
-      <grip:Input step="0" socket="0"/>
     </grip:Connection>
   </connections>
   <settings>
