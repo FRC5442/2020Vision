@@ -268,7 +268,6 @@ def findTargets(frame, mask):
 
     if len(contours) != 0:
         image = findTape(contours, image, centerX, centerY)
-        networkTable.putBoolean("tapeDetected", True)
     else:
         networkTable.putBoolean("tapeDetected", False)
 
@@ -279,8 +278,6 @@ def findTargets(frame, mask):
 # centerY is center y coordinate of image
 def findTape(contours, image, centerX, centerY):
     screenHeight, screenWidth, channels = image.shape
-    #Seen vision targets (correct angle, adjacent to each other)
-    targets = []
 
     if len(contours) >= 1:
         #Sort contours by area size (biggest to smallest)
@@ -307,6 +304,7 @@ def findTape(contours, image, centerX, centerY):
             '''
 
             rx, ry, rw, rh = cv2.boundingRect(cnt) # Creates Bounding Rectangle
+            ratio = rw/rh
 
             # (Optional) Coverage Area Filtering
             '''
@@ -315,7 +313,7 @@ def findTape(contours, image, centerX, centerY):
             '''
 
             # Filters contours based off of size, width, height, and verticies
-            if (rw*rh) >= 34 and rw <= 95 and rh <=100 and len(cnt) <= 100: # Checks contour variables
+            if (rw*rh) >= 27 and (rw*2 + rh*2) >= 34 and rw <= 95 and rh <=100 and len(cnt) <= 100 and ratio >= 1 and ratio <= 5: # Checks contour variables
 
                 ### MOSTLY DRAWING CODE, BUT CALCULATES IMPORTANT INFO ###
                 # Gets the centeroids of contour
@@ -376,20 +374,14 @@ def findTape(contours, image, centerX, centerY):
         biggestCnts = sorted(biggestCnts, key=lambda x: x[2], reverse=True)
 
         if len(biggestCnts) >= 1:
-            #x coords of contours
+            networkTable.putBoolean("tapeDetected", True)
+
+            #coordinates of contours
             cx1 = biggestCnts[0][0]
             cy1 = biggestCnts[0][1]
                 
             networkTable.putNumber("OffsetX", (cx1 - centerX))
             networkTable.putNumber("OffsetY", (cy1 - centerY))
-
-    #Check if there are targets seen
-    if (len(targets) > 0):
-        networkTable.putBoolean("tapeDetected", True)
-        targets.sort(key=lambda x: math.fabs(x[0]))
-
-    else:
-        networkTable.putBoolean("tapeDetected", False)
 
     cv2.line(image, (round(centerX), screenHeight), (round(centerX), 0), (255, 255, 255), 2)
 

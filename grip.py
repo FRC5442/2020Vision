@@ -29,17 +29,17 @@ class Grip:
         self.find_contours_output = None
 
         self.__filter_contours_contours = self.find_contours_output
-        self.__filter_contours_min_area = 0.0
+        self.__filter_contours_min_area = 26.0
         self.__filter_contours_min_perimeter = 34.0
         self.__filter_contours_min_width = 0.0
         self.__filter_contours_max_width = 95.0
         self.__filter_contours_min_height = 0.0
         self.__filter_contours_max_height = 100.0
-        self.__filter_contours_solidity = [0.0, 29.292929292929294]
+        self.__filter_contours_solidity = [0.0, 100.0]
         self.__filter_contours_max_vertices = 100.0
         self.__filter_contours_min_vertices = 0.0
         self.__filter_contours_min_ratio = 1.0
-        self.__filter_contours_max_ratio = 1000.0
+        self.__filter_contours_max_ratio = 5.0
 
         self.filter_contours_output = None
 
