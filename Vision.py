@@ -555,9 +555,9 @@ if __name__ == "__main__":
             processed = frame
         else:
             cap.autoExpose = False
-            img = flipImage(frame)
+            #img = flipImage(frame)
             #imgBlur = blur(greenBlur, img)
-            hsv = threshold_video(lowerGreen, upperGreen, img)
+            hsv = threshold_video(lowerGreen, upperGreen, frame)
             processed = findTargets(img, hsv)
             #processed = hsv # For Debugging Purposes
 
