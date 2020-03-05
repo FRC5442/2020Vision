@@ -220,8 +220,8 @@ image_width = 256
 image_height = 144
 
 # Color Threshold the image
-upperGreen = np.array([105, 215, 96])
-lowerGreen = np.array([0, 0, 34])
+upperGreen = np.array([107, 255, 255])
+lowerGreen = np.array([52, 73, 37])
 
 # Blur must be an odd number
 greenBlur = 3
